@@ -76,21 +76,39 @@ pub fn scalar32_set_int(r: &mut Scalar32, v: u32) {
     r.d[7] = 0;
 }
 
-/// Returns a sequence of bits from a Scalar32 digit
+/// Returns a sequence of bits from a Scalar32
 ///
-/// Returns an error if count > 32
-/// Returns an error if the asked bits come from different digits
+/// The length of this sequence must be able to fill
+/// an unsigned 32bits integer.
 ///
 /// # Arguments
 ///
 /// * `a` - Reference to the Scalar32 to be set
-/// * `offset` - Offset of the first bit to count from
+/// * `offset` - Offset of the sequence first bit
 /// * `count` - Number of bits to return
-pub fn scalar32_get_bits(a: &Scalar32, offset: u32, count: u32) -> Result<u32, &str> {
+///
+/// # Errors
+///
+/// Returns a String error if :
+/// - count is 0 : nonsense to get 0 bits
+/// - count is > 32 : the sequence must fit a 32bits integer
+/// - offset + count > 256 : overflow
+pub fn scalar32_get_bits(a: &Scalar32, offset: u32, count: u32) -> Result<u32, String> {
+    if count == 0 || count > 32 {
+        return Err(format!("count must be > 0 and < 32, got {}", count));
+    }
+    if offset + count > 256 {
+        return Err(format!(
+            "offset + count must be < 256, got {}",
+            offset + count
+        ));
+    }
     if (offset + count - 1) >> 5 == offset >> 5 {
         Ok((a.d[(offset >> 5) as usize] >> (offset & 0x1F)) & ((1 << count) - 1))
     } else {
-        Err("error: could not get bits from Scalar32")
+        Ok(((a.d[(offset >> 5) as usize] >> (offset & 0x1F))
+            | (a.d[((offset >> 5) + 1) as usize] << (32 - (offset & 0x1F))))
+            & ((1 << count) - 1))
     }
 }
 
@@ -125,7 +143,7 @@ mod tests {
     #[test]
     fn test_scalar32_get_bits() {
         let digits: [u32; 8] = [
-            0b00001011011011011111111011010111,
+            0b11000101101101101111111101101011,
             0b11101011011110101010001010101010,
             0b00101010111010100010101100101110,
             0b00010101111010101111100011010111,
@@ -135,17 +153,27 @@ mod tests {
             0b11110101000100110110100110101110,
         ];
         let mut scalar: Scalar32 = Scalar32::new(digits);
-        // Does the job
-        assert_eq!(scalar32_get_bits(&mut scalar, 3, 10).unwrap(), 0b1111011010);
-        // Raises error when trying to retrieve bits from two different digits
+        // Tries to get a bit sequence from a single digit
         assert_eq!(
-            scalar32_get_bits(&mut scalar, 26, 10),
-            Err("error: could not get bits from Scalar32")
+            scalar32_get_bits(&mut scalar, 33, 15).unwrap(),
+            0b101000101010101
         );
-        // Raises error when asking for more than 32 bits
+        // Tries to get a bit sequence from a two different digits
+        assert_eq!(scalar32_get_bits(&mut scalar, 60, 8).unwrap(), 0b11101110);
+        // Count is 0 : nonsense to get 0 bits
         assert_eq!(
-            scalar32_get_bits(&mut scalar, 3, 34),
-            Err("error: could not get bits from Scalar32")
+            scalar32_get_bits(&mut scalar, 56, 0),
+            Err(String::from("count must be > 0 and < 32, got 0"))
+        );
+        // Count is > 32 : the sequence must fit a 32bits integer
+        assert_eq!(
+            scalar32_get_bits(&mut scalar, 33, 56),
+            Err(String::from("count must be > 0 and < 32, got 56"))
+        );
+        // Overflow : offset + count > 256
+        assert_eq!(
+            scalar32_get_bits(&mut scalar, 240, 20),
+            Err(String::from("offset + count must be < 256, got 260"))
         );
     }
 }
