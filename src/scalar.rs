@@ -58,3 +58,23 @@ pub fn scalar32_clear(r: &mut Scalar32) {
     r.d[6] = 0;
     r.d[7] = 0;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_scalar32_new() {
+        let digits: [u32; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
+        let scalar: Scalar32 = Scalar32::new(digits);
+        assert_eq!(scalar.d, [0, 1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
+    fn test_scalar32_clear() {
+        let digits: [u32; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
+        let mut scalar: Scalar32 = Scalar32::new(digits);
+        scalar32_clear(&mut scalar);
+        assert_eq!(scalar.d, [0, 0, 0, 0, 0, 0, 0, 0]);
+    }
+}
