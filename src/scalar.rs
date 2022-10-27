@@ -95,11 +95,11 @@ pub fn scalar32_set_int(r: &mut Scalar32, v: u32) {
 /// - offset + count > 256 : overflow
 pub fn scalar32_get_bits(a: &Scalar32, offset: u32, count: u32) -> Result<u32, String> {
     if count == 0 || count > 32 {
-        return Err(format!("count must be > 0 and < 32, got {}", count));
+        return Err(format!("count must be in ]0, 32], got {}", count));
     }
     if offset + count > 256 {
         return Err(format!(
-            "offset + count must be < 256, got {}",
+            "offset + count must be in [1, 256], got {}",
             offset + count
         ));
     }
@@ -110,6 +110,24 @@ pub fn scalar32_get_bits(a: &Scalar32, offset: u32, count: u32) -> Result<u32, S
             | (a.d[((offset >> 5) + 1) as usize] << (32 - (offset & 0x1F))))
             & ((1 << count) - 1))
     }
+}
+
+pub fn scalar32_check_overflow(a: &Scalar32) -> u32 {
+    let mut yes: u32 = 0;
+    let mut no: u32 = 0;
+    no |= (a.d[7] < N_7_32) as u32;
+    no |= (a.d[6] < N_6_32) as u32;
+    no |= (a.d[5] < N_5_32) as u32;
+    no |= (a.d[4] < N_4_32) as u32;
+    yes |= ((a.d[4] > N_4_32) as u32) & !no;
+    no |= ((a.d[3] < N_3_32) as u32) & !yes;
+    yes |= ((a.d[3] > N_3_32) as u32) & !no;
+    no |= ((a.d[2] < N_2_32) as u32) & !yes;
+    yes |= ((a.d[2] > N_2_32) as u32) & !no;
+    no |= ((a.d[1] < N_1_32) as u32) & !yes;
+    yes |= ((a.d[1] > N_1_32) as u32) & !no;
+    yes |= ((a.d[0] >= N_0_32) as u32) & !no;
+    return yes;
 }
 
 #[cfg(test)]
@@ -163,17 +181,17 @@ mod tests {
         // Count is 0 : nonsense to get 0 bits
         assert_eq!(
             scalar32_get_bits(&mut scalar, 56, 0),
-            Err(String::from("count must be > 0 and < 32, got 0"))
+            Err(String::from("count must be in ]0, 32], got 0"))
         );
         // Count is > 32 : the sequence must fit a 32bits integer
         assert_eq!(
             scalar32_get_bits(&mut scalar, 33, 56),
-            Err(String::from("count must be > 0 and < 32, got 56"))
+            Err(String::from("count must be in ]0, 32], got 56"))
         );
         // Overflow : offset + count > 256
         assert_eq!(
             scalar32_get_bits(&mut scalar, 240, 20),
-            Err(String::from("offset + count must be < 256, got 260"))
+            Err(String::from("offset + count must be in [1, 256], got 260"))
         );
     }
 }
