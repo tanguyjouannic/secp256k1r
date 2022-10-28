@@ -28,6 +28,7 @@ const N_H_7_32: u32 = 0x7FFFFFFF;
 /// A scalar modulo the group order of the secp256k1 curve
 ///
 /// The scalar is made of 8 digits (32bits integers)
+#[derive(Copy)]
 pub struct Scalar32 {
     d: [u32; 8],
 }
@@ -40,6 +41,13 @@ impl Scalar32 {
     /// * `digits` - Array of 8 32bits integers
     pub fn new(digits: [u32; 8]) -> Scalar32 {
         Scalar32 { d: digits }
+    }
+}
+
+impl Clone for Scalar32 {
+    /// Returns a clone of the Scalar32 instance
+    fn clone(&self) -> Scalar32 {
+        Scalar32 { d: self.d }
     }
 }
 
@@ -112,6 +120,14 @@ pub fn scalar32_get_bits(a: &Scalar32, offset: u32, count: u32) -> Result<u32, S
     }
 }
 
+/// Checks if the Scalar32 exceeds or is equal to the
+/// limbs of the secp256k1 order
+///
+/// Returns 1 if the scalar is >= N, else returns 0
+///
+/// # Arguments
+///
+/// * `a` - Reference to the Scalar32 to be checked
 pub fn scalar32_check_overflow(a: &Scalar32) -> u32 {
     let mut yes: u32 = 0;
     let mut no: u32 = 0;
@@ -193,5 +209,25 @@ mod tests {
             scalar32_get_bits(&mut scalar, 240, 20),
             Err(String::from("offset + count must be in [1, 256], got 260"))
         );
+    }
+
+    #[test]
+    fn test_scalar32_check_overflow() {
+        let digits: [u32; 8] = [
+            N_0_32, N_1_32, N_2_32, N_3_32, N_4_32, N_5_32, N_6_32, N_7_32,
+        ];
+        let limbs: Scalar32 = Scalar32::new(digits);
+        // If the scalar is equal to the limbs, should return 1
+        assert_eq!(scalar32_check_overflow(&limbs), 1);
+
+        let mut overflowed_scalar = limbs.clone();
+        overflowed_scalar.d[0] += 1;
+        // If the scalar exceeds the limbs, should return 1
+        assert_eq!(scalar32_check_overflow(&overflowed_scalar), 1);
+
+        let mut non_overflowed_scalar = limbs.clone();
+        non_overflowed_scalar.d[0] -= 1;
+        // If the scalar is less than the limbs, should return 0
+        assert_eq!(scalar32_check_overflow(&non_overflowed_scalar), 0);
     }
 }
