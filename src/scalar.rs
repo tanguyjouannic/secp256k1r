@@ -1,36 +1,36 @@
 // Limbs of the secp256k1 order
-const N_0_32: u32 = 0xD0364141;
-const N_1_32: u32 = 0xBFD25E8C;
-const N_2_32: u32 = 0xAF48A03B;
-const N_3_32: u32 = 0xBAAEDCE6;
-const N_4_32: u32 = 0xFFFFFFFE;
-const N_5_32: u32 = 0xFFFFFFFF;
-const N_6_32: u32 = 0xFFFFFFFF;
-const N_7_32: u32 = 0xFFFFFFFF;
+pub const N_0_32: u32 = 0xD0364141;
+pub const N_1_32: u32 = 0xBFD25E8C;
+pub const N_2_32: u32 = 0xAF48A03B;
+pub const N_3_32: u32 = 0xBAAEDCE6;
+pub const N_4_32: u32 = 0xFFFFFFFE;
+pub const N_5_32: u32 = 0xFFFFFFFF;
+pub const N_6_32: u32 = 0xFFFFFFFF;
+pub const N_7_32: u32 = 0xFFFFFFFF;
 
 // Limbs of 2^256 minus the secp256k1 order
-const N_C_0_32: u32 = !N_0_32 + 1;
-const N_C_1_32: u32 = !N_1_32;
-const N_C_2_32: u32 = !N_2_32;
-const N_C_3_32: u32 = !N_3_32;
-const N_C_4_32: u32 = 1;
+pub const N_C_0_32: u32 = !N_0_32 + 1;
+pub const N_C_1_32: u32 = !N_1_32;
+pub const N_C_2_32: u32 = !N_2_32;
+pub const N_C_3_32: u32 = !N_3_32;
+pub const N_C_4_32: u32 = 1;
 
 // Limbs of half the secp256k1 order
-const N_H_0_32: u32 = 0x681B20A0;
-const N_H_1_32: u32 = 0xDFE92F46;
-const N_H_2_32: u32 = 0x57A4501D;
-const N_H_3_32: u32 = 0x5D576E73;
-const N_H_4_32: u32 = 0xFFFFFFFF;
-const N_H_5_32: u32 = 0xFFFFFFFF;
-const N_H_6_32: u32 = 0xFFFFFFFF;
-const N_H_7_32: u32 = 0x7FFFFFFF;
+pub const N_H_0_32: u32 = 0x681B20A0;
+pub const N_H_1_32: u32 = 0xDFE92F46;
+pub const N_H_2_32: u32 = 0x57A4501D;
+pub const N_H_3_32: u32 = 0x5D576E73;
+pub const N_H_4_32: u32 = 0xFFFFFFFF;
+pub const N_H_5_32: u32 = 0xFFFFFFFF;
+pub const N_H_6_32: u32 = 0xFFFFFFFF;
+pub const N_H_7_32: u32 = 0x7FFFFFFF;
 
 /// A scalar modulo the group order of the secp256k1 curve
 ///
 /// The scalar is made of 8 digits (32bits integers)
 #[derive(Copy)]
 pub struct Scalar32 {
-    d: [u32; 8],
+    pub d: [u32; 8],
 }
 
 impl Scalar32 {
@@ -143,91 +143,185 @@ pub fn scalar32_check_overflow(a: &Scalar32) -> u32 {
     no |= ((a.d[1] < N_1_32) as u32) & !yes;
     yes |= ((a.d[1] > N_1_32) as u32) & !no;
     yes |= ((a.d[0] >= N_0_32) as u32) & !no;
-    return yes;
+    yes
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_scalar32_new() {
-        let digits: [u32; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
-        let scalar: Scalar32 = Scalar32::new(digits);
-        assert_eq!(scalar.d, [0, 1, 2, 3, 4, 5, 6, 7]);
+/// Reduces the Scalar32 with the provided overflow
+///
+/// # Arguments
+///
+/// * `r` - Mutable reference to the Scalar32 to be reduced
+/// * `overflow` - Eventual overflow
+///
+/// # Errors
+///
+/// Returns a String error if overflow is not in [0, 1]
+pub fn scalar32_reduce(r: &mut Scalar32, overflow: u32) -> Result<u32, String> {
+    let mut t: u64;
+    if overflow > 1 {
+        return Err(format!("overflow must be in [0, 1], got {}", overflow));
     }
+    t = r.d[0] as u64 + (overflow * N_C_0_32) as u64;
+    r.d[0] = t as u32 & 0xFFFFFFFF;
+    t >>= 32;
+    t += r.d[1] as u64 + (overflow * N_C_1_32) as u64;
+    r.d[1] = t as u32 & 0xFFFFFFFF;
+    t >>= 32;
+    t += r.d[2] as u64 + (overflow * N_C_2_32) as u64;
+    r.d[2] = t as u32 & 0xFFFFFFFF;
+    t >>= 32;
+    t += r.d[3] as u64 + (overflow * N_C_3_32) as u64;
+    r.d[3] = t as u32 & 0xFFFFFFFF;
+    t >>= 32;
+    t += r.d[4] as u64 + (overflow * N_C_4_32) as u64;
+    r.d[4] = t as u32 & 0xFFFFFFFF;
+    t >>= 32;
+    t += r.d[5] as u64;
+    r.d[5] = t as u32 & 0xFFFFFFFF;
+    t >>= 32;
+    t += r.d[6] as u64;
+    r.d[6] = t as u32 & 0xFFFFFFFF;
+    t >>= 32;
+    t += r.d[7] as u64;
+    r.d[7] = t as u32 & 0xFFFFFFFF;
+    Ok(overflow)
+}
 
-    #[test]
-    fn test_scalar32_clear() {
-        let digits: [u32; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
-        let mut scalar: Scalar32 = Scalar32::new(digits);
-        scalar32_clear(&mut scalar);
-        assert_eq!(scalar.d, [0, 0, 0, 0, 0, 0, 0, 0]);
+/// Adds two Scalar32 together modulo the group order and
+/// returns whether it overflowed
+///
+/// # Arguments
+///
+/// * `r` - Mutable reference to the Scalar32 that will hold the addition
+/// * `a` - Reference to the first Scalar32 member
+/// * `b` - Reference to the second Scalar32 member
+///
+/// # Errors
+///
+/// Returns a String error if :
+/// - the addition generated an overflow that is invalid
+/// - the reduction failed
+pub fn scalar32_add(r: &mut Scalar32, a: &Scalar32, b: &Scalar32) -> Result<u32, String> {
+    let mut t: u64 = (a.d[0] + b.d[0]) as u64;
+    r.d[0] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += (a.d[1] + b.d[1]) as u64;
+    r.d[1] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += (a.d[2] + b.d[2]) as u64;
+    r.d[2] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += (a.d[3] + b.d[3]) as u64;
+    r.d[3] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += (a.d[4] + b.d[4]) as u64;
+    r.d[4] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += (a.d[5] + b.d[5]) as u64;
+    r.d[5] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += (a.d[6] + b.d[6]) as u64;
+    r.d[6] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += (a.d[7] + b.d[7]) as u64;
+    r.d[7] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    let overflow: u32 = (t + scalar32_check_overflow(r) as u64) as u32;
+    if overflow > 1 {
+        return Err(format!("expected overflow in [0, 1], got {}", overflow));
     }
-
-    #[test]
-    fn test_scalar32_set_int() {
-        let digits: [u32; 8] = [0, 1, 2, 3, 4, 5, 6, 7];
-        let mut scalar: Scalar32 = Scalar32::new(digits);
-        let integer: u32 = 32;
-        scalar32_set_int(&mut scalar, integer);
-        assert_eq!(scalar.d, [32, 0, 0, 0, 0, 0, 0, 0]);
+    match scalar32_reduce(r, overflow) {
+        Ok(overflow) => Ok(overflow),
+        Err(e) => Err(format!("failed to reduce with error: {}", e)),
     }
+}
 
-    #[test]
-    fn test_scalar32_get_bits() {
-        let digits: [u32; 8] = [
-            0b11000101101101101111111101101011,
-            0b11101011011110101010001010101010,
-            0b00101010111010100010101100101110,
-            0b00010101111010101111100011010111,
-            0b11101011011110101010001010101010,
-            0b01111011110101011110000001010111,
-            0b00001011110101111111111010110111,
-            0b11110101000100110110100110101110,
-        ];
-        let mut scalar: Scalar32 = Scalar32::new(digits);
-        // Tries to get a bit sequence from a single digit
-        assert_eq!(
-            scalar32_get_bits(&mut scalar, 33, 15).unwrap(),
-            0b101000101010101
-        );
-        // Tries to get a bit sequence from a two different digits
-        assert_eq!(scalar32_get_bits(&mut scalar, 60, 8).unwrap(), 0b11101110);
-        // Count is 0 : nonsense to get 0 bits
-        assert_eq!(
-            scalar32_get_bits(&mut scalar, 56, 0),
-            Err(String::from("count must be in ]0, 32], got 0"))
-        );
-        // Count is > 32 : the sequence must fit a 32bits integer
-        assert_eq!(
-            scalar32_get_bits(&mut scalar, 33, 56),
-            Err(String::from("count must be in ]0, 32], got 56"))
-        );
-        // Overflow : offset + count > 256
-        assert_eq!(
-            scalar32_get_bits(&mut scalar, 240, 20),
-            Err(String::from("offset + count must be in [1, 256], got 260"))
-        );
+/// Conditionally adds a power of two to a scalar
+///
+/// The result is not allowed to overflow
+///
+/// # Arguments
+///
+/// * `r` - Mutable reference to the Scalar32
+/// * `bit` - TODO: Explain
+/// * `flag` - TODO: Explain
+///
+/// # Errors
+///
+/// Returns a String error if :
+/// - bit is not in [0, 255]
+/// - addition overflowed
+pub fn scalar32_cadd_bit(r: &mut Scalar32, mut bit: u32, flag: i32) -> Result<(), String> {
+    if bit > 255 {
+        return Err(format!("expected bit in [0, 255]")); // TODO: check if 0 is allowed and modify message
     }
-
-    #[test]
-    fn test_scalar32_check_overflow() {
-        let digits: [u32; 8] = [
-            N_0_32, N_1_32, N_2_32, N_3_32, N_4_32, N_5_32, N_6_32, N_7_32,
-        ];
-        let limbs: Scalar32 = Scalar32::new(digits);
-        // If the scalar is equal to the limbs, should return 1
-        assert_eq!(scalar32_check_overflow(&limbs), 1);
-
-        let mut overflowed_scalar = limbs.clone();
-        overflowed_scalar.d[0] += 1;
-        // If the scalar exceeds the limbs, should return 1
-        assert_eq!(scalar32_check_overflow(&overflowed_scalar), 1);
-
-        let mut non_overflowed_scalar = limbs.clone();
-        non_overflowed_scalar.d[0] -= 1;
-        // If the scalar is less than the limbs, should return 0
-        assert_eq!(scalar32_check_overflow(&non_overflowed_scalar), 0);
+    let mut t: u64;
+    bit += (flag as u32 - 1) & 0x100;
+    t = r.d[0] as u64 + ((((bit >> 5) == 0) as u32) << (bit & 0x1F)) as u64;
+    r.d[0] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += r.d[1] as u64 + ((((bit >> 5) == 1) as u32) << (bit & 0x1F)) as u64;
+    r.d[1] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += r.d[2] as u64 + ((((bit >> 5) == 2) as u32) << (bit & 0x1F)) as u64;
+    r.d[2] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += r.d[3] as u64 + ((((bit >> 5) == 3) as u32) << (bit & 0x1F)) as u64;
+    r.d[3] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += r.d[4] as u64 + ((((bit >> 5) == 4) as u32) << (bit & 0x1F)) as u64;
+    r.d[4] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += r.d[5] as u64 + ((((bit >> 5) == 5) as u32) << (bit & 0x1F)) as u64;
+    r.d[5] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += r.d[6] as u64 + ((((bit >> 5) == 6) as u32) << (bit & 0x1F)) as u64;
+    r.d[6] = (t & 0xFFFFFFFF) as u32;
+    t >>= 32;
+    t += r.d[7] as u64 + ((((bit >> 5) == 7) as u32) << (bit & 0x1F)) as u64;
+    r.d[7] = (t & 0xFFFFFFFF) as u32;
+    if (t >> 32) != 0 {
+        return Err(format!("")); // TODO: Fill the message
     }
+    if scalar32_check_overflow(r) != 0 {
+        return Err(format!("addition overflowed"));
+    }
+    Ok(())
+}
+
+/// Sets a scalar from a big endian byte array
+///
+/// The scalar will be reduced modulo group order n
+///
+/// # Arguments
+///
+/// * `bin` - Mutable reference to a Scalar32
+/// * `b32` - 32 bytes array
+/// * `overflow` - non-zero if the scalar overflowed before reduction, zero otherwise
+/// 
+/// # Errors
+/// 
+/// Returns a String error if reduction fails
+pub fn scalar_set_b32(r: &mut Scalar32, b32: [u8; 32], overflow: &mut u32) -> Result<(), String> {
+    r.d[0] =
+        b32[31] as u32 | (b32[30] as u32) << 8 | (b32[29] as u32) << 16 | (b32[28] as u32) << 24;
+    r.d[1] =
+        b32[27] as u32 | (b32[26] as u32) << 8 | (b32[25] as u32) << 16 | (b32[24] as u32) << 24;
+    r.d[2] =
+        b32[23] as u32 | (b32[22] as u32) << 8 | (b32[21] as u32) << 16 | (b32[20] as u32) << 24;
+    r.d[3] =
+        b32[19] as u32 | (b32[18] as u32) << 8 | (b32[17] as u32) << 16 | (b32[16] as u32) << 24;
+    r.d[4] =
+        b32[15] as u32 | (b32[14] as u32) << 8 | (b32[13] as u32) << 16 | (b32[12] as u32) << 24;
+    r.d[5] = b32[11] as u32 | (b32[10] as u32) << 8 | (b32[9] as u32) << 16 | (b32[8] as u32) << 24;
+    r.d[6] = b32[7] as u32 | (b32[6] as u32) << 8 | (b32[5] as u32) << 16 | (b32[4] as u32) << 24;
+    r.d[7] = b32[3] as u32 | (b32[2] as u32) << 8 | (b32[1] as u32) << 16 | (b32[0] as u32) << 24;
+    let o: u32 = match scalar32_reduce(r, scalar32_check_overflow(r)) {
+        Ok(overflow) => overflow,
+        Err(e) => return Err(format!("failed to reduce Scalar32: {}", e)),
+    };
+    if *overflow != 0 {
+        *overflow = o;
+    }
+    Ok(())
 }
