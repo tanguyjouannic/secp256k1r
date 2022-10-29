@@ -479,3 +479,32 @@ pub fn scalar32_is_one(scalar: &Scalar32) -> bool {
         false
     }
 }
+
+/// Checks whether a scalar is higher than the group order divided by 2
+///
+/// Returns true if it is, false otherwise
+///
+/// # Arguments
+///
+/// * `scalar` - Reference to the Scalar32 to be checked
+pub fn scalar32_is_high(scalar: &Scalar32) -> bool {
+    let mut yes: u32 = 0;
+    let mut no: u32 = 0;
+    no |= (scalar.d[7] < N_H_7_32) as u32;
+    yes |= (scalar.d[7] > N_H_7_32) as u32 & !no;
+    no |= (scalar.d[6] < N_H_6_32) as u32 & !yes;
+    no |= (scalar.d[5] < N_H_5_32) as u32 & !yes;
+    no |= (scalar.d[4] < N_H_4_32) as u32 & !yes;
+    no |= (scalar.d[3] < N_H_3_32) as u32 & !yes;
+    yes |= (scalar.d[3] > N_H_3_32) as u32 & !no;
+    no |= (scalar.d[2] < N_H_2_32) as u32 & !yes;
+    yes |= (scalar.d[2] > N_H_2_32) as u32 & !no;
+    no |= (scalar.d[1] < N_H_1_32) as u32 & !yes;
+    yes |= (scalar.d[1] > N_H_1_32) as u32 & !no;
+    yes |= (scalar.d[0] > N_H_0_32) as u32 & !no;
+    if yes == 1 {
+        true
+    } else {
+        false
+    }
+}
