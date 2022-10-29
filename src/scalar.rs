@@ -391,14 +391,14 @@ pub fn scalar32_get_byte_array(scalar: &Scalar32, byte_array: &mut [u8; 32]) {
 }
 
 /// Checks if a Scalar32 is zero
-/// 
-/// Returns 1 if it is zero, 0 otherwise
-/// 
+///
+/// Returns true if it is, false otherwise
+///
 /// # Arguments
-/// 
+///
 /// * `scalar` - Reference to the Scalar32 to be checked
-pub fn scalar32_is_zero(scalar: &Scalar32) -> u32 {
-    ((scalar.d[0]
+pub fn scalar32_is_zero(scalar: &Scalar32) -> bool {
+    if (scalar.d[0]
         | scalar.d[1]
         | scalar.d[2]
         | scalar.d[3]
@@ -406,5 +406,76 @@ pub fn scalar32_is_zero(scalar: &Scalar32) -> u32 {
         | scalar.d[5]
         | scalar.d[6]
         | scalar.d[7])
-        == 0) as u32
+        == 0
+    {
+        true
+    } else {
+        false
+    }
+}
+
+/// Computes the complement of a scalar modulo the group order
+///
+/// # Arguments
+///
+/// * `scalar` - Reference to the Scalar32 to be negated
+/// * `result` - Mutable reference to the Scalar32 to fill with the result
+pub fn scalar32_negate(result: &mut Scalar32, scalar: &Scalar32) {
+    if scalar32_is_zero(scalar) {
+        result.d[0] = 0;
+        result.d[1] = 0;
+        result.d[2] = 0;
+        result.d[3] = 0;
+        result.d[4] = 0;
+        result.d[5] = 0;
+        result.d[6] = 0;
+    } else {
+        let mut tmp: u64 = !scalar.d[0] as u64 + N_0_32 as u64 + 1;
+        result.d[0] = tmp as u32;
+        tmp >>= 32;
+        tmp += !scalar.d[1] as u64 + N_1_32 as u64;
+        result.d[1] = tmp as u32;
+        tmp >>= 32;
+        tmp += !scalar.d[2] as u64 + N_2_32 as u64;
+        result.d[2] = tmp as u32;
+        tmp >>= 32;
+        tmp += !scalar.d[3] as u64 + N_3_32 as u64;
+        result.d[3] = tmp as u32;
+        tmp >>= 32;
+        tmp += !scalar.d[4] as u64 + N_4_32 as u64;
+        result.d[4] = tmp as u32;
+        tmp >>= 32;
+        tmp += !scalar.d[5] as u64 + N_5_32 as u64;
+        result.d[5] = tmp as u32;
+        tmp >>= 32;
+        tmp += !scalar.d[6] as u64 + N_6_32 as u64;
+        result.d[6] = tmp as u32;
+        tmp >>= 32;
+        tmp += !scalar.d[7] as u64 + N_7_32 as u64;
+        result.d[7] = tmp as u32;
+    }
+}
+
+/// Checks if a Scalar32 is one
+///
+/// Returns true if it is, false otherwise
+///
+/// # Arguments
+///
+/// * `scalar` - Reference to the Scalar32 to be checked
+pub fn scalar32_is_one(scalar: &Scalar32) -> bool {
+    if ((scalar.d[0] ^ 1)
+        | scalar.d[1]
+        | scalar.d[2]
+        | scalar.d[3]
+        | scalar.d[4]
+        | scalar.d[5]
+        | scalar.d[6]
+        | scalar.d[7])
+        == 0
+    {
+        true
+    } else {
+        false
+    }
 }
