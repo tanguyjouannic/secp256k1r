@@ -389,3 +389,22 @@ pub fn scalar32_get_byte_array(scalar: &Scalar32, byte_array: &mut [u8; 32]) {
     byte_array[30] = (scalar.d[0] >> 8) as u8;
     byte_array[31] = scalar.d[0] as u8;
 }
+
+/// Checks if a Scalar32 is zero
+/// 
+/// Returns 1 if it is zero, 0 otherwise
+/// 
+/// # Arguments
+/// 
+/// * `scalar` - Reference to the Scalar32 to be checked
+pub fn scalar32_is_zero(scalar: &Scalar32) -> u32 {
+    ((scalar.d[0]
+        | scalar.d[1]
+        | scalar.d[2]
+        | scalar.d[3]
+        | scalar.d[4]
+        | scalar.d[5]
+        | scalar.d[6]
+        | scalar.d[7])
+        == 0) as u32
+}
