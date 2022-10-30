@@ -508,3 +508,33 @@ pub fn scalar32_is_high(scalar: &Scalar32) -> bool {
         false
     }
 }
+
+/// Add a*b to the number defined by (c0,c1,c2), c2 must never overflow
+///
+/// # Arguments
+///
+/// * `a` - 
+/// * `b` - 
+/// * `c0` - 
+/// * `c1` - 
+/// * `c2` - 
+pub fn muladd(
+    a: &mut u32,
+    b: &mut u32,
+    c0: &mut u32,
+    c1: &mut u32,
+    c2: &mut u32,
+) -> Result<(), String> {
+    let t: u64 = *a as u64 * *b as u64;
+    let mut th: u64 = t >> 32;
+    let tl: u64 = t;
+    *c0 += tl as u32;
+    th += (*c0 < tl as u32) as u64;
+    *c1 += th as u32;
+    *c2 += (*c1 < th as u32) as u32;
+    if *c1 < th as u32 || *c2 == 0 {
+        Err(format!("muladd failed"))
+    } else {
+        Ok(())
+    }
+}
