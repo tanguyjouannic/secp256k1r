@@ -439,6 +439,10 @@ impl Scalar32 {
     }
 
     /// Conditionally negate a number, in constant time.
+    ///
+    /// # Arguments
+    ///
+    /// * `flag` - TODO.
     pub fn cond_negate(&mut self, flag: u32) {
         if !self.is_zero() {
             let mask: u32 = !flag - 1;
@@ -470,19 +474,67 @@ impl Scalar32 {
     }
 }
 
-// pub fn muladd(a: &mut u32, b: &mut u32, c0: &mut u32, c1: &mut u32, c2: &mut u32) -> Result<(), String> {
-//     let tl: u32;
-//     let mut th: u32;
-//     let tmp: u64 = (*a * *b) as u64;
-//     th = (tmp >> 32) as u32;
-//     tl = tmp as u32;
-//     *c0 += tl;
-//     th += (*c0 < tl) as u32;
-//     *c1 += th;
-//     *c2 += (*c1 < th) as u32;
-//     if *c1 < th || *c2 == 0 {
-//         Err(format!("pb"))
-//     } else {
-//         Ok(())
-//     }
-// }
+/// Multiply two 32bits integer (a, b).
+///
+/// The result is added to a 3x32bits integers (c0, c1, c2).
+/// The composant c2 must never overflow.
+///
+/// # Arguments
+///
+/// * `a` - TODO.
+/// * `b` - TODO.
+/// * `c0` - TODO.
+/// * `c1` - TODO.
+/// * `c2` - TODO.
+pub fn multiply_add(
+    a: &mut u32,
+    b: &mut u32,
+    c0: &mut u32,
+    c1: &mut u32,
+    c2: &mut u32,
+) -> Result<(), String> {
+    let tmp: u64 = (*a * *b) as u64;
+    let mut th: u32 = (tmp >> 32) as u32;
+    let tl: u32 = tmp as u32;
+    *c0 += tl;
+    th += (*c0 < tl) as u32;
+    *c1 += th;
+    *c2 += (*c1 < th) as u32;
+    if *c1 < th {
+        Err(format!("TODO: understand the error"))
+    } else if *c2 == 0 {
+        Err(format!("c2 overflows"))
+    } else {
+        Ok(())
+    }
+}
+
+/// Multiply two 32bits integer (a, b).
+///
+/// The result is added to a 2x32bits integers (c0, c1).
+/// The composant c1 must never overflow.
+///
+/// # Arguments
+///
+/// * `a` - TODO.
+/// * `b` - TODO.
+/// * `c0` - TODO.
+/// * `c1` - TODO.
+pub fn multiply_add_fast(
+    a: &mut u32,
+    b: &mut u32,
+    c0: &mut u32,
+    c1: &mut u32,
+) -> Result<(), String> {
+    let tmp: u64 = (*a * *b) as u64;
+    let mut th: u32 = (tmp >> 32) as u32;
+    let tl: u32 = tmp as u32;
+    *c0 += tl;
+    th += (*c0 < tl) as u32;
+    *c1 += th;
+    if *c1 < th {
+        Err(format!("c1 overflows"))
+    } else {
+        Ok(())
+    }
+}
