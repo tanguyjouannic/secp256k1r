@@ -474,18 +474,18 @@ impl Scalar32 {
     }
 }
 
-/// Multiply two 32bits integer (a, b).
+/// Multiplies two 32bits integer (a, b).
 ///
-/// The result is added to a 3x32bits integers (c0, c1, c2).
+/// The result is added to a 3x32bits integers (c2, c1, c0).
 /// The composant c2 must never overflow.
 ///
 /// # Arguments
 ///
-/// * `a` - TODO.
-/// * `b` - TODO.
-/// * `c0` - TODO.
-/// * `c1` - TODO.
-/// * `c2` - TODO.
+/// * `a` - First multiplication term.
+/// * `b` - Second multiplication term.
+/// * `c0` - First scalar component.
+/// * `c1` - Second scalar component.
+/// * `c2` - Third scalar component.
 pub fn multiply_add(
     a: &mut u32,
     b: &mut u32,
@@ -493,48 +493,66 @@ pub fn multiply_add(
     c1: &mut u32,
     c2: &mut u32,
 ) -> Result<(), String> {
-    let tmp: u64 = (*a * *b) as u64;
-    let mut th: u32 = (tmp >> 32) as u32;
-    let tl: u32 = tmp as u32;
-    *c0 += tl;
-    th += (*c0 < tl) as u32;
-    *c1 += th;
-    *c2 += (*c1 < th) as u32;
-    if *c1 < th {
-        Err(format!("TODO: understand the error"))
-    } else if *c2 == 0 {
-        Err(format!("c2 overflows"))
-    } else {
-        Ok(())
+    // Stores the result of multiplying the 2 32bits integers in a 64bits integer.
+    let tmp: u64 = (*a as u64) * (*b as u64);
+    // Separates higher term and lower term in two 32bits integers.
+    let mut higher_term: u32 = (tmp >> 32) as u32;
+    let lower_term: u32 = tmp as u32;
+    // Adds lower_term to c0 and increments higher_term if c0 overflows.
+    *c0 = (*c0).wrapping_add(lower_term);
+    if *c0 < lower_term {
+        higher_term += 1;
     }
+    // Adds higher_term to c1 and increments c2 if c1 overflows.
+    *c1 = (*c1).wrapping_add(higher_term);
+    if *c1 < higher_term {
+        *c2 = (*c2).wrapping_add(1);
+        // If c2 overflows, returns a String error.
+        if *c2 == 0 {
+            return Err(format!("c2 overflowed"));
+        }
+    }
+    Ok(())
 }
 
-/// Multiply two 32bits integer (a, b).
-///
-/// The result is added to a 2x32bits integers (c0, c1).
-/// The composant c1 must never overflow.
+/// Adds a 32bits integer (a) to a 3x32bits scalar (c0, c1, c2).
+/// The composant c2 must never overflow.
 ///
 /// # Arguments
 ///
-/// * `a` - TODO.
-/// * `b` - TODO.
-/// * `c0` - TODO.
-/// * `c1` - TODO.
-pub fn multiply_add_fast(
-    a: &mut u32,
-    b: &mut u32,
-    c0: &mut u32,
-    c1: &mut u32,
-) -> Result<(), String> {
-    let tmp: u64 = (*a * *b) as u64;
-    let mut th: u32 = (tmp >> 32) as u32;
-    let tl: u32 = tmp as u32;
-    *c0 += tl;
-    th += (*c0 < tl) as u32;
-    *c1 += th;
-    if *c1 < th {
-        Err(format!("c1 overflows"))
-    } else {
-        Ok(())
+/// * `a` - First 32bits number to add.
+/// * `c0` - First scalar component.
+/// * `c1` - Second scalar component.
+/// * `c2` - Third scalar component.
+pub fn sum_add(a: &mut u32, c0: &mut u32, c1: &mut u32, c2: &mut u32) -> Result<(), String> {
+    // Adds a to the composant c0.
+    *c0 = (*c0).wrapping_add(*a);
+    // If c0 overflows, increments c1.
+    if *c0 < *a {
+        *c1 = (*c1).wrapping_add(1);
+        // If c1 overflows, increments c2.
+        if *c1 == 0 {
+            *c2 = (*c2).wrapping_add(1);
+            // If c2 overflows too, returns a String error.
+            if *c2 == 0 {
+                return Err(format!("c2 overflowed"));
+            }
+        }
     }
+    Ok(())
+}
+
+/// Extracts the lowest 32bits of the 3x32bits scalar (c0, c1, c2).
+/// 
+/// The result is stored in n and the scalar is then left shifted.
+/// 
+/// * `n` - Mutable reference to result variable.
+/// * `c0` - First scalar component.
+/// * `c1` - Second scalar component.
+/// * `c2` - Third scalar component.
+pub fn extract(n: &mut u32, c0: &mut u32, c1: &mut u32, c2: &mut u32) {
+    *n = *c0;
+    *c0 = *c1;
+    *c1 = *c2;
+    *c2 = 0;
 }
