@@ -473,10 +473,23 @@ impl Scalar32 {
         }
     }
 
+    /// Multiplies two Scalar32 and returns a 256bits scalar.
+    ///
+    /// The result is stored in an array of 16x32bits integers array.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - Reference to the first multiplication term.
+    /// * `b` - Reference to the second multiplication term.
+    ///
+    /// # Errors
+    ///
+    /// Returns a String error if :
+    /// - the result exceeds 256bits for some reason.
+    /// - the inner accumulator overflows.
     pub fn multiply_512(a: &Scalar32, b: &Scalar32) -> Result<[u32; 16], String> {
         let mut result: [u32; 16] = [0; 16];
         let mut c: [u32; 3] = [0; 3];
-
         multiply_add(&a.d[0], &b.d[0], &mut c)?;
         extract(&mut result[0], &mut c);
         multiply_add(&a.d[0], &b.d[1], &mut c)?;
