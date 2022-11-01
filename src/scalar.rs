@@ -472,87 +472,178 @@ impl Scalar32 {
             // return 2 * (mask == 0) - 1;
         }
     }
+
+    pub fn multiply_512(a: &Scalar32, b: &Scalar32) -> Result<[u32; 16], String> {
+        let mut result: [u32; 16] = [0; 16];
+        let mut c: [u32; 3] = [0; 3];
+
+        multiply_add(&a.d[0], &b.d[0], &mut c)?;
+        extract(&mut result[0], &mut c);
+        multiply_add(&a.d[0], &b.d[1], &mut c)?;
+        multiply_add(&a.d[1], &b.d[0], &mut c)?;
+        extract(&mut result[1], &mut c);
+        multiply_add(&a.d[0], &b.d[2], &mut c)?;
+        multiply_add(&a.d[1], &b.d[1], &mut c)?;
+        multiply_add(&a.d[2], &b.d[0], &mut c)?;
+        extract(&mut result[2], &mut c);
+        multiply_add(&a.d[0], &b.d[3], &mut c)?;
+        multiply_add(&a.d[1], &b.d[2], &mut c)?;
+        multiply_add(&a.d[2], &b.d[1], &mut c)?;
+        multiply_add(&a.d[3], &b.d[0], &mut c)?;
+        extract(&mut result[3], &mut c);
+        multiply_add(&a.d[0], &b.d[4], &mut c)?;
+        multiply_add(&a.d[1], &b.d[3], &mut c)?;
+        multiply_add(&a.d[2], &b.d[2], &mut c)?;
+        multiply_add(&a.d[3], &b.d[1], &mut c)?;
+        multiply_add(&a.d[4], &b.d[0], &mut c)?;
+        extract(&mut result[4], &mut c);
+        multiply_add(&a.d[0], &b.d[5], &mut c)?;
+        multiply_add(&a.d[1], &b.d[4], &mut c)?;
+        multiply_add(&a.d[2], &b.d[3], &mut c)?;
+        multiply_add(&a.d[3], &b.d[2], &mut c)?;
+        multiply_add(&a.d[4], &b.d[1], &mut c)?;
+        multiply_add(&a.d[5], &b.d[0], &mut c)?;
+        extract(&mut result[5], &mut c);
+        multiply_add(&a.d[0], &b.d[6], &mut c)?;
+        multiply_add(&a.d[1], &b.d[5], &mut c)?;
+        multiply_add(&a.d[2], &b.d[4], &mut c)?;
+        multiply_add(&a.d[3], &b.d[3], &mut c)?;
+        multiply_add(&a.d[4], &b.d[2], &mut c)?;
+        multiply_add(&a.d[5], &b.d[1], &mut c)?;
+        multiply_add(&a.d[6], &b.d[0], &mut c)?;
+        extract(&mut result[6], &mut c);
+        multiply_add(&a.d[0], &b.d[7], &mut c)?;
+        multiply_add(&a.d[1], &b.d[6], &mut c)?;
+        multiply_add(&a.d[2], &b.d[5], &mut c)?;
+        multiply_add(&a.d[3], &b.d[4], &mut c)?;
+        multiply_add(&a.d[4], &b.d[3], &mut c)?;
+        multiply_add(&a.d[5], &b.d[2], &mut c)?;
+        multiply_add(&a.d[6], &b.d[1], &mut c)?;
+        multiply_add(&a.d[7], &b.d[0], &mut c)?;
+        extract(&mut result[7], &mut c);
+        multiply_add(&a.d[1], &b.d[7], &mut c)?;
+        multiply_add(&a.d[2], &b.d[6], &mut c)?;
+        multiply_add(&a.d[3], &b.d[5], &mut c)?;
+        multiply_add(&a.d[4], &b.d[4], &mut c)?;
+        multiply_add(&a.d[5], &b.d[3], &mut c)?;
+        multiply_add(&a.d[6], &b.d[2], &mut c)?;
+        multiply_add(&a.d[7], &b.d[1], &mut c)?;
+        extract(&mut result[8], &mut c);
+        multiply_add(&a.d[2], &b.d[7], &mut c)?;
+        multiply_add(&a.d[3], &b.d[6], &mut c)?;
+        multiply_add(&a.d[4], &b.d[5], &mut c)?;
+        multiply_add(&a.d[5], &b.d[4], &mut c)?;
+        multiply_add(&a.d[6], &b.d[3], &mut c)?;
+        multiply_add(&a.d[7], &b.d[2], &mut c)?;
+        extract(&mut result[9], &mut c);
+        multiply_add(&a.d[3], &b.d[7], &mut c)?;
+        multiply_add(&a.d[4], &b.d[6], &mut c)?;
+        multiply_add(&a.d[5], &b.d[5], &mut c)?;
+        multiply_add(&a.d[6], &b.d[4], &mut c)?;
+        multiply_add(&a.d[7], &b.d[3], &mut c)?;
+        extract(&mut result[10], &mut c);
+        multiply_add(&a.d[4], &b.d[7], &mut c)?;
+        multiply_add(&a.d[5], &b.d[6], &mut c)?;
+        multiply_add(&a.d[6], &b.d[5], &mut c)?;
+        multiply_add(&a.d[7], &b.d[4], &mut c)?;
+        extract(&mut result[11], &mut c);
+        multiply_add(&a.d[5], &b.d[7], &mut c)?;
+        multiply_add(&a.d[6], &b.d[6], &mut c)?;
+        multiply_add(&a.d[7], &b.d[5], &mut c)?;
+        extract(&mut result[12], &mut c);
+        multiply_add(&a.d[6], &b.d[7], &mut c)?;
+        multiply_add(&a.d[7], &b.d[6], &mut c)?;
+        extract(&mut result[13], &mut c);
+        multiply_add(&a.d[7], &b.d[7], &mut c)?;
+        extract(&mut result[14], &mut c);
+        if c[1] != 0 {
+            return Err(format!("result exceeded 256bits"));
+        }
+        result[15] = c[0];
+        Ok(result)
+    }
 }
 
-/// Multiplies two 32bits integer (a, b).
+/// Multiplies two 32bits integer a and b.
 ///
-/// The result is added to a 3x32bits integers (c2, c1, c0).
-/// The composant c2 must never overflow.
+/// The result is added to an accumulator built with 3x32bits integers
+/// c2, c1 and c0. The accumulator must never overflow (meaning the
+/// component c2 must never overflow).
 ///
 /// # Arguments
 ///
-/// * `a` - First multiplication term.
-/// * `b` - Second multiplication term.
-/// * `c0` - First scalar component.
-/// * `c1` - Second scalar component.
-/// * `c2` - Third scalar component.
-pub fn multiply_add(
-    a: &mut u32,
-    b: &mut u32,
-    c0: &mut u32,
-    c1: &mut u32,
-    c2: &mut u32,
-) -> Result<(), String> {
+/// * `a` - Reference to the first multiplication term.
+/// * `b` - Reference to the second multiplication term.
+/// * `c` - Mutable reference to the array containing the accumulator.
+///
+/// # Errors
+///
+/// Returns a String error if the accumulator overflowed in the process.
+pub fn multiply_add(a: &u32, b: &u32, c: &mut [u32; 3]) -> Result<(), String> {
     // Stores the result of multiplying the 2 32bits integers in a 64bits integer.
     let tmp: u64 = (*a as u64) * (*b as u64);
     // Separates higher term and lower term in two 32bits integers.
     let mut higher_term: u32 = (tmp >> 32) as u32;
     let lower_term: u32 = tmp as u32;
     // Adds lower_term to c0 and increments higher_term if c0 overflows.
-    *c0 = (*c0).wrapping_add(lower_term);
-    if *c0 < lower_term {
+    c[0] = c[0].wrapping_add(lower_term);
+    if c[0] < lower_term {
         higher_term += 1;
     }
     // Adds higher_term to c1 and increments c2 if c1 overflows.
-    *c1 = (*c1).wrapping_add(higher_term);
-    if *c1 < higher_term {
-        *c2 = (*c2).wrapping_add(1);
+    c[1] = c[1].wrapping_add(higher_term);
+    if c[1] < higher_term {
+        c[2] = c[2].wrapping_add(1);
         // If c2 overflows, returns a String error.
-        if *c2 == 0 {
-            return Err(format!("c2 overflowed"));
+        if c[2] == 0 {
+            return Err(format!("accumulator overflowed"));
         }
     }
     Ok(())
 }
 
-/// Adds a 32bits integer (a) to a 3x32bits scalar (c0, c1, c2).
-/// The composant c2 must never overflow.
+/// Adds a 32bits integer to 3x32bits accumulator.
+///
+/// The accumulator must never overflow. Therefore, the
+/// component c2 from the (c2, c1, c0) accumulator must
+/// never overflow).
 ///
 /// # Arguments
 ///
-/// * `a` - First 32bits number to add.
-/// * `c0` - First scalar component.
-/// * `c1` - Second scalar component.
-/// * `c2` - Third scalar component.
-pub fn sum_add(a: &mut u32, c0: &mut u32, c1: &mut u32, c2: &mut u32) -> Result<(), String> {
+/// * `a` - Reference to the 32bits integer to add.
+/// * `c` - Mutable reference to the array containing the accumulator.
+///
+/// # Errors
+///
+/// Returns a String error if the accumulator overflowed in the process.
+pub fn sum_add(a: &u32, c: &mut [u32; 3]) -> Result<(), String> {
     // Adds a to the composant c0.
-    *c0 = (*c0).wrapping_add(*a);
+    c[0] = c[0].wrapping_add(*a);
     // If c0 overflows, increments c1.
-    if *c0 < *a {
-        *c1 = (*c1).wrapping_add(1);
+    if c[0] < *a {
+        c[1] = c[1].wrapping_add(1);
         // If c1 overflows, increments c2.
-        if *c1 == 0 {
-            *c2 = (*c2).wrapping_add(1);
+        if c[1] == 0 {
+            c[2] = c[2].wrapping_add(1);
             // If c2 overflows too, returns a String error.
-            if *c2 == 0 {
-                return Err(format!("c2 overflowed"));
+            if c[2] == 0 {
+                return Err(format!("accumulator overflowed"));
             }
         }
     }
     Ok(())
 }
 
-/// Extracts the lowest 32bits of the 3x32bits scalar (c0, c1, c2).
-/// 
-/// The result is stored in n and the scalar is then left shifted.
-/// 
-/// * `n` - Mutable reference to result variable.
-/// * `c0` - First scalar component.
-/// * `c1` - Second scalar component.
-/// * `c2` - Third scalar component.
-pub fn extract(n: &mut u32, c0: &mut u32, c1: &mut u32, c2: &mut u32) {
-    *n = *c0;
-    *c0 = *c1;
-    *c1 = *c2;
-    *c2 = 0;
+/// Extracts the lowest 32bits of the accumulator.
+///
+/// The component c0 from the (c2, c1, c0) accumulator is
+/// extracted and stored in a 32bits integer n.
+///
+/// * `n` - Mutable reference to the variable that will contain the result.
+/// * `c` - Mutable reference to the accumulator.
+pub fn extract(n: &mut u32, c: &mut [u32; 3]) {
+    *n = c[0];
+    c[0] = c[1];
+    c[1] = c[2];
+    c[2] = 0;
 }
