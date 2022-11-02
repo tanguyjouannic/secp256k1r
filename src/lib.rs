@@ -1,4 +1,4 @@
-mod scalar;
+pub mod scalar;
 
 // #[cfg(test)]
 // mod tests {

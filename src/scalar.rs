@@ -80,7 +80,7 @@ impl Scalar32 {
         self.d[7] = 0;
     }
 
-    /// Returns a sequence of bits from the Scalar32.
+    /// Returns a sequence of bits from the scalar.
     ///
     /// The length of this sequence must be able to fill
     /// an unsigned 32bits integer.
@@ -115,7 +115,7 @@ impl Scalar32 {
         }
     }
 
-    /// Checks if the Scalar32 overflows.
+    /// Checks if the scalar overflows.
     ///
     /// In our context, a scalar overflows if it exceeds or
     /// is equal to the limbs of the secp256k1 order.
@@ -573,6 +573,192 @@ impl Scalar32 {
             return Err(format!("result exceeded 256bits"));
         }
         result[15] = c[0];
+        Ok(result)
+    }
+
+    pub fn reduce_512(scalar_512: &[u32; 16]) -> Result<Scalar32, String> {
+        let n0: u32 = scalar_512[8];
+        let n1: u32 = scalar_512[9];
+        let n2: u32 = scalar_512[10];
+        let n3: u32 = scalar_512[11];
+        let n4: u32 = scalar_512[12];
+        let n5: u32 = scalar_512[13];
+        let n6: u32 = scalar_512[14];
+        let n7: u32 = scalar_512[15];
+
+        let mut m0: u32 = 0;
+        let mut m1: u32 = 0;
+        let mut m2: u32 = 0;
+        let mut m3: u32 = 0;
+        let mut m4: u32 = 0;
+        let mut m5: u32 = 0;
+        let mut m6: u32 = 0;
+        let mut m7: u32 = 0;
+        let mut m8: u32 = 0;
+        let mut m9: u32 = 0;
+        let mut m10: u32 = 0;
+        let mut m11: u32 = 0;
+        let m12: u32;
+
+        let mut p0: u32 = 0;
+        let mut p1: u32 = 0;
+        let mut p2: u32 = 0;
+        let mut p3: u32 = 0;
+        let mut p4: u32 = 0;
+        let mut p5: u32 = 0;
+        let mut p6: u32 = 0;
+        let mut p7: u32 = 0;
+        let p8: u32;
+
+        let mut c: [u32; 3] = [0; 3];
+        c[0] = scalar_512[0];
+
+        // Reduce 512 bits into 385.
+        // m[0..12] = l[0..7] + n[0..7] * SECP256K1_N_C.
+        multiply_add(&n0, &N_C_0_32, &mut c)?;
+        extract(&mut m0, &mut c);
+        sum_add(&scalar_512[1], &mut c)?;
+        multiply_add(&n1, &N_C_0_32, &mut c)?;
+        multiply_add(&n0, &N_C_1_32, &mut c)?;
+        extract(&mut m1, &mut c);
+        sum_add(&scalar_512[2], &mut c)?;
+        multiply_add(&n2, &N_C_0_32, &mut c)?;
+        multiply_add(&n1, &N_C_1_32, &mut c)?;
+        multiply_add(&n0, &N_C_2_32, &mut c)?;
+        extract(&mut m2, &mut c);
+        sum_add(&scalar_512[3], &mut c)?;
+        multiply_add(&n3, &N_C_0_32, &mut c)?;
+        multiply_add(&n2, &N_C_1_32, &mut c)?;
+        multiply_add(&n1, &N_C_2_32, &mut c)?;
+        multiply_add(&n0, &N_C_3_32, &mut c)?;
+        extract(&mut m3, &mut c);
+        sum_add(&scalar_512[4], &mut c)?;
+        multiply_add(&n4, &N_C_0_32, &mut c)?;
+        multiply_add(&n3, &N_C_1_32, &mut c)?;
+        multiply_add(&n2, &N_C_2_32, &mut c)?;
+        multiply_add(&n1, &N_C_3_32, &mut c)?;
+        sum_add(&n0, &mut c)?;
+        extract(&mut m4, &mut c);
+        sum_add(&scalar_512[5], &mut c)?;
+        multiply_add(&n5, &N_C_0_32, &mut c)?;
+        multiply_add(&n4, &N_C_1_32, &mut c)?;
+        multiply_add(&n3, &N_C_2_32, &mut c)?;
+        multiply_add(&n2, &N_C_3_32, &mut c)?;
+        sum_add(&n1, &mut c)?;
+        extract(&mut m5, &mut c);
+        sum_add(&scalar_512[6], &mut c)?;
+        multiply_add(&n6, &N_C_0_32, &mut c)?;
+        multiply_add(&n5, &N_C_1_32, &mut c)?;
+        multiply_add(&n4, &N_C_2_32, &mut c)?;
+        multiply_add(&n3, &N_C_3_32, &mut c)?;
+        sum_add(&n2, &mut c)?;
+        extract(&mut m6, &mut c);
+        sum_add(&scalar_512[7], &mut c)?;
+        multiply_add(&n7, &N_C_0_32, &mut c)?;
+        multiply_add(&n6, &N_C_1_32, &mut c)?;
+        multiply_add(&n5, &N_C_2_32, &mut c)?;
+        multiply_add(&n4, &N_C_3_32, &mut c)?;
+        sum_add(&n3, &mut c)?;
+        extract(&mut m7, &mut c);
+        multiply_add(&n7, &N_C_1_32, &mut c)?;
+        multiply_add(&n6, &N_C_2_32, &mut c)?;
+        multiply_add(&n5, &N_C_3_32, &mut c)?;
+        sum_add(&n4, &mut c)?;
+        extract(&mut m8, &mut c);
+        multiply_add(&n7, &N_C_2_32, &mut c)?;
+        multiply_add(&n6, &N_C_3_32, &mut c)?;
+        sum_add(&n5, &mut c)?;
+        extract(&mut m9, &mut c);
+        multiply_add(&n7, &N_C_3_32, &mut c)?;
+        sum_add(&n6, &mut c)?;
+        extract(&mut m10, &mut c);
+        sum_add(&n7, &mut c)?;
+        extract(&mut m11, &mut c);
+        if c[0] > 1 {
+            return Err(format!("TODO"));
+        }
+        m12 = c[0];
+
+        // Reduce 385 bits into 258.
+        // p[0..8] = m[0..7] + m[8..12] * SECP256K1_N_C.
+        c[0] = m0;
+        c[1] = 0;
+        c[2] = 0;
+        multiply_add(&m8, &N_C_0_32, &mut c)?;
+        extract(&mut p0, &mut c);
+        sum_add(&m1, &mut c)?;
+        multiply_add(&m9, &N_C_0_32, &mut c)?;
+        multiply_add(&m8, &N_C_1_32, &mut c)?;
+        extract(&mut p1, &mut c);
+        sum_add(&m2, &mut c)?;
+        multiply_add(&m10, &N_C_0_32, &mut c)?;
+        multiply_add(&m9, &N_C_1_32, &mut c)?;
+        multiply_add(&m8, &N_C_2_32, &mut c)?;
+        extract(&mut p2, &mut c);
+        sum_add(&m3, &mut c)?;
+        multiply_add(&m11, &N_C_0_32, &mut c)?;
+        multiply_add(&m10, &N_C_1_32, &mut c)?;
+        multiply_add(&m9, &N_C_2_32, &mut c)?;
+        multiply_add(&m8, &N_C_3_32, &mut c)?;
+        extract(&mut p3, &mut c);
+        sum_add(&m4, &mut c)?;
+        multiply_add(&m12, &N_C_0_32, &mut c)?;
+        multiply_add(&m11, &N_C_1_32, &mut c)?;
+        multiply_add(&m10, &N_C_2_32, &mut c)?;
+        multiply_add(&m9, &N_C_3_32, &mut c)?;
+        sum_add(&m8, &mut c)?;
+        extract(&mut p4, &mut c);
+        sum_add(&m5, &mut c)?;
+        multiply_add(&m12, &N_C_1_32, &mut c)?;
+        multiply_add(&m11, &N_C_2_32, &mut c)?;
+        multiply_add(&m10, &N_C_3_32, &mut c)?;
+        sum_add(&m9, &mut c)?;
+        extract(&mut p5, &mut c);
+        sum_add(&m6, &mut c)?;
+        multiply_add(&m12, &N_C_2_32, &mut c)?;
+        multiply_add(&m11, &N_C_3_32, &mut c)?;
+        sum_add(&m10, &mut c)?;
+        extract(&mut p6, &mut c);
+        sum_add(&m7, &mut c)?;
+        multiply_add(&m12, &N_C_3_32, &mut c)?;
+        sum_add(&m11, &mut c)?;
+        extract(&mut p7, &mut c);
+        p8 = c[0] + m12;
+        if p8 > 2 {
+            return Err(format!("TODO"));
+        }
+
+        // Reduce 258 bits into 256.
+        // r[0..7] = p[0..7] + p[8] * SECP256K1_N_C.
+        let mut result: Scalar32 = Scalar32::new([0, 0, 0, 0, 0, 0, 0, 0]);
+        let mut tmp: u64;
+        tmp = p0 as u64 + N_C_0_32 as u64 * p8 as u64;
+        result.d[0] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += p1 as u64 + N_C_1_32 as u64 * p8 as u64;
+        result.d[1] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += p2 as u64 + N_C_2_32 as u64 * p8 as u64;
+        result.d[2] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += p3 as u64 + N_C_3_32 as u64 * p8 as u64;
+        result.d[3] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += p4 as u64 + p8 as u64;
+        result.d[4] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += p5 as u64;
+        result.d[5] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += p6 as u64;
+        result.d[6] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += p7 as u64;
+        result.d[7] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        // Final reduction of r. 
+        // TODO: how about overflow with tmp
+        result.reduce();
         Ok(result)
     }
 }
