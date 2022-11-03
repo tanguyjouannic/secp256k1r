@@ -756,7 +756,7 @@ impl Scalar32 {
         tmp += p7 as u64;
         result.d[7] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        // Final reduction of r. 
+        // Final reduction of r.
         // TODO: how about overflow with tmp
         result.reduce();
         Ok(result)
