@@ -28,7 +28,7 @@ pub const N_H_7_32: u32 = 0x7FFFFFFF;
 /// A scalar modulo the group order of the secp256k1 curve.
 ///
 /// The scalar is made of 8 digits (32bits integers).
-#[derive(Copy)]
+#[derive(Debug, Copy)]
 pub struct Scalar32 {
     pub d: [u32; 8],
 }
@@ -141,34 +141,33 @@ impl Scalar32 {
 
     /// Reduces the Scalar32 modulo the group order of the secp256k1 curve.
     ///
-    /// Will not perform reduction if the the scalar does not overflow.
+    /// You should perform a reduction on a scalar that have overflowed
+    /// the limbs of the secp256k1 curve.
     pub fn reduce(&mut self) {
-        if self.check_overflow() {
-            let mut tmp: u64;
-            tmp = self.d[0] as u64 + N_C_0_32 as u64;
-            self.d[0] = (tmp & 0xFFFFFFFF) as u32;
-            tmp >>= 32;
-            tmp += self.d[1] as u64 + N_C_1_32 as u64;
-            self.d[1] = (tmp & 0xFFFFFFFF) as u32;
-            tmp >>= 32;
-            tmp += self.d[2] as u64 + N_C_2_32 as u64;
-            self.d[2] = (tmp & 0xFFFFFFFF) as u32;
-            tmp >>= 32;
-            tmp += self.d[3] as u64 + N_C_3_32 as u64;
-            self.d[3] = (tmp & 0xFFFFFFFF) as u32;
-            tmp >>= 32;
-            tmp += self.d[4] as u64 + N_C_4_32 as u64;
-            self.d[4] = (tmp & 0xFFFFFFFF) as u32;
-            tmp >>= 32;
-            tmp += self.d[5] as u64;
-            self.d[5] = (tmp & 0xFFFFFFFF) as u32;
-            tmp >>= 32;
-            tmp += self.d[6] as u64;
-            self.d[6] = (tmp & 0xFFFFFFFF) as u32;
-            tmp >>= 32;
-            tmp += self.d[7] as u64;
-            self.d[7] = (tmp & 0xFFFFFFFF) as u32;
-        }
+        let mut tmp: u64;
+        tmp = self.d[0] as u64 + N_C_0_32 as u64;
+        self.d[0] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += self.d[1] as u64 + N_C_1_32 as u64;
+        self.d[1] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += self.d[2] as u64 + N_C_2_32 as u64;
+        self.d[2] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += self.d[3] as u64 + N_C_3_32 as u64;
+        self.d[3] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += self.d[4] as u64 + N_C_4_32 as u64;
+        self.d[4] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += self.d[5] as u64;
+        self.d[5] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += self.d[6] as u64;
+        self.d[6] = (tmp & 0xFFFFFFFF) as u32;
+        tmp >>= 32;
+        tmp += self.d[7] as u64;
+        self.d[7] = (tmp & 0xFFFFFFFF) as u32;
     }
 
     /// Adds two Scalar32 together.
@@ -180,7 +179,7 @@ impl Scalar32 {
     ///
     /// * `a` - Reference to the first Scalar32 member.
     /// * `b` - Reference to the second Scalar32 member.
-    pub fn add(a: &Scalar32, b: &Scalar32) -> Scalar32 {
+    pub fn add(a: &Scalar32, b: &Scalar32) -> Result<Scalar32, String> {
         let mut result: Scalar32 = Scalar32::new([0, 0, 0, 0, 0, 0, 0, 0]);
         let mut tmp: u64 = (a.d[0] + b.d[0]) as u64;
         result.d[0] = (tmp & 0xFFFFFFFF) as u32;
@@ -206,8 +205,12 @@ impl Scalar32 {
         tmp += (a.d[7] + b.d[7]) as u64;
         result.d[7] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        result.reduce();
-        result
+        if !(tmp != 0 && result.check_overflow()) {
+            result.reduce();
+            Ok(result)
+        } else {
+            Err(format!("result exceeded 256 bits and the body overflowed"))
+        }
     }
 
     /// Conditionally adds a power of two to a scalar.
