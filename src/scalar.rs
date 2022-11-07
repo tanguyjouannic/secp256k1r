@@ -170,46 +170,45 @@ impl Scalar32 {
         self.d[7] = (tmp & 0xFFFFFFFF) as u32;
     }
 
-    /// Adds two Scalar32 together.
+    /// Adds the provided Scalar32.
     ///
     /// If the result overflows, if will be reduced modulo
     /// the group order of the secp256k1 curve.
     ///
     /// # Arguments
     ///
-    /// * `a` - Reference to the first Scalar32 member.
-    /// * `b` - Reference to the second Scalar32 member.
-    pub fn add(a: &Scalar32, b: &Scalar32) -> Result<Scalar32, String> {
+    /// * `a` - Reference to the Scalar32 to add.
+    pub fn add(&self, a: &Scalar32) -> Result<Scalar32, String> {
         let mut result: Scalar32 = Scalar32::new([0, 0, 0, 0, 0, 0, 0, 0]);
-        let mut tmp: u64 = (a.d[0] + b.d[0]) as u64;
+        let mut tmp: u64 = (self.d[0] + a.d[0]) as u64;
         result.d[0] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        tmp += (a.d[1] + b.d[1]) as u64;
+        tmp += (self.d[1] + a.d[1]) as u64;
         result.d[1] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        tmp += (a.d[2] + b.d[2]) as u64;
+        tmp += (self.d[2] + a.d[2]) as u64;
         result.d[2] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        tmp += (a.d[3] + b.d[3]) as u64;
+        tmp += (self.d[3] + a.d[3]) as u64;
         result.d[3] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        tmp += (a.d[4] + b.d[4]) as u64;
+        tmp += (self.d[4] + a.d[4]) as u64;
         result.d[4] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        tmp += (a.d[5] + b.d[5]) as u64;
+        tmp += (self.d[5] + a.d[5]) as u64;
         result.d[5] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        tmp += (a.d[6] + b.d[6]) as u64;
+        tmp += (self.d[6] + a.d[6]) as u64;
         result.d[6] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
-        tmp += (a.d[7] + b.d[7]) as u64;
+        tmp += (self.d[7] + a.d[7]) as u64;
         result.d[7] = (tmp & 0xFFFFFFFF) as u32;
         tmp >>= 32;
         if !(tmp != 0 && result.check_overflow()) {
             result.reduce();
             Ok(result)
         } else {
-            Err(format!("result exceeded 256 bits and the body overflowed"))
+            Err(format!("result exceeded 256 bits and the scalar overflowed"))
         }
     }
 

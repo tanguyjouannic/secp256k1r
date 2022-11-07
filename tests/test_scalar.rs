@@ -93,25 +93,40 @@ fn scalar32_reduce() {
     let mut scalar: Scalar32 = Scalar32::new(limbs);
     let mut overflowed_scalar: Scalar32 = scalar.clone();
     overflowed_scalar.d[0] += 42;
+    let mut non_overflowed_scalar: Scalar32 = scalar.clone();
+    non_overflowed_scalar.d[0] -= 42;
     scalar.reduce();
     overflowed_scalar.reduce();
+    non_overflowed_scalar.reduce();
 
     // Checks the reducing of a scalar that equals the limbs.
     assert_eq!(scalar.d, [0, 0, 0, 0, 0, 0, 0, 0]);
     // Checks the reducing of a scalar that exceeds the limbs.
     assert_eq!(overflowed_scalar.d, [42, 0, 0, 0, 0, 0, 0, 0]);
+    // Cehcks the reducing of a scalar that does not exceeds the limbs.
+    assert_eq!(non_overflowed_scalar.d, [4294967254, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295]);
 }
 
-#[test]
-fn scalar32_add() {
-    let digits: [u32; 8] = [
-        0b11000101101101101111111101101011,
-        0b11101011011110101010001010101010,
-        0b00101010111010100010101100101110,
-        0b00010101111010101111100011010111,
-        0b11101011011110101010001010101010,
-        0b01111011110101011110000001010111,
-        0b00001011110101111111111010110111,
-        0b11110101000100110110100110101110,
-    ];
-}
+// #[test]
+// fn scalar32_add() {
+//     const MIN: u32 = 0;
+//     const MAX: u32 = 4294967295;
+//     let min: [u32; 8] = [
+//         MIN, MIN, MIN, MIN, MIN, MIN, MIN, MIN,
+//     ];
+//     let max: [u32; 8] = [
+//         MAX, MAX, MAX, MAX, MAX, MAX, MAX, MAX,
+//     ];
+//     let limbs: [u32; 8] = [
+//         N_0_32, N_1_32, N_2_32, N_3_32, N_4_32, N_5_32, N_6_32, N_7_32,
+//     ];
+//     let huge: [u32; 8] = [
+//         2147483648, 0, 0, 0, 0, 0, 0, 0
+//     ];
+//     let scalar_min: Scalar32 = Scalar32::new(min);
+//     let scalar_max: Scalar32 = Scalar32::new(max);
+//     let scalar_limbs: Scalar32 = Scalar32::new(limbs);
+//     let mut scalar_huge: Scalar32 = Scalar32::new(huge);
+//     scalar_huge = scalar_huge.add(&scalar_huge).unwrap();
+//     println!("{:?}", scalar_huge);
+// }
